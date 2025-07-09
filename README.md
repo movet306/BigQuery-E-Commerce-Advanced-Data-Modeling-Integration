@@ -386,7 +386,6 @@ RENAME TO `orders_custom_schema_v2`;
 ```
 **Why?**
 Clear versioning in table names makes production operations and handovers easier.
-## 🔗 Project Owner
 
 ### 5.5. Final Table Review
 Inspected the final table structure and content before **Data Manipulation Language (DML)** applications
@@ -410,6 +409,7 @@ LIMIT 5;
 ```
 ![image](https://github.com/user-attachments/assets/2f478a85-f924-4b29-b133-694641ece786)
 
+## 🔗 Project Owner
 **Mert Ovet**  
 [LinkedIn: linkedin.com/in/mertovet](https://linkedin.com/in/mertovet)
 
