@@ -63,6 +63,7 @@ All DataFrames were merged to create a unified and analysis-friendly flat table.
 By the end of this process, I had transformed complex, deeply nested JSON data into flat, ready-to-analyze DataFrames.  
 This workflow highlights how to tackle real-world nested data scenarios using Python before cloud data warehousing.
 
+[Python notebook for detailed data inspection](https://github.com/movet306/BigQuery-E-Commerce-Advanced-Data-Modeling-Integration/blob/main/olist_bigquery_nested_orders%20(1).ipynb)
 ---
 
 ## 2. Data Loading & Cloud Integration
