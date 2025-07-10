@@ -1065,7 +1065,7 @@ ORDER BY
   total_spent DESC
 LIMIT 10;
 ---
-
+```
 ### 7.7. Advanced Segmentation & Window Function Analysis
 
 #### Business Question 1:  
@@ -1085,7 +1085,7 @@ ORDER BY
   total_spent DESC
 LIMIT 10;
 ---
-
+```
 ### 7.7. Advanced Segmentation & Window Function Analysis
 
 #### Business Question 1:  
