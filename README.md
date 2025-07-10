@@ -15,6 +15,16 @@ This project demonstrates an end-to-end real-world scenario of advanced e-commer
 - **Stack:**  
   Python (for data structuring & export), Google Cloud Storage (staging), BigQuery (data warehouse & analytics).
 
+  ## Data Source
+
+The data used in this case study comes from the [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) on Kaggle. 
+
+## Project Authorship & Methodology
+
+All data analysis, feature engineering, KPIs, customer/seller segmentation, and business strategies presented in this project were **entirely designed, implemented, and documented by myself after thoroughly exploring the raw data**.  
+
+No third-party analyses, code, or strategic frameworks were used. Every business question, analytical approach, and SQL/Python implementation reflects my own planning, reasoning, and hands-on work based on my understanding of the dataset and business context.
+
 ---
 
 ## 1. Data Flow: Step-by-Step Process
@@ -24,9 +34,7 @@ This project demonstrates an end-to-end real-world scenario of advanced e-commer
 #### a. Library Imports & Notebook Setup
 
 I started by importing all essential Python libraries for data analysis:
-- `pandas`, `json`, `matplotlib`, `seaborn`, `numpy`
-
-To keep the workflow clean, I configured the notebook for better visuals (e.g., turned off warnings, set matplotlib style).
+- `pandas`, `json`, `numpy`
 
 #### b. Reading and Inspecting Raw Data
 
@@ -46,19 +54,9 @@ For each nested field (`items`, `payments`, `shipments`, `reviews`), I:
 - Used `order_id` as the relational key to join them back to the master table.
 - Ensured the resulting DataFrames could be merged and referenced for further analysis.
 
-#### e. Calculating Basic Statistics
-
-I computed summary statistics such as:
-- Number of orders
-- Total products sold
-- Payment method distribution
-- Shipment statuses
-- Review ratings
-
 All DataFrames were merged to create a unified and analysis-friendly flat table.
 
-
-#### f. Final Structure
+#### e. Final Structure
 
 By the end of this process, I had transformed complex, deeply nested JSON data into flat, ready-to-analyze DataFrames.  
 This workflow highlights how to tackle real-world nested data scenarios using Python before cloud data warehousing.
