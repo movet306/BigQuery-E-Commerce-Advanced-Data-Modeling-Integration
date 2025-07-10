@@ -927,10 +927,122 @@ Exceptionally high delivery rates are positive for brand trust and customer loya
 Even small differences in delivery/cancellation rates can highlight opportunities for operational excellence.
 
 
+---
 
+### 7.6. Time-Based Sales Volume Analysis
 
+#### Business Question 1:  
+How do monthly order counts and revenue change? Which months are the busiest?
 
+```sql
+SELECT
+  EXTRACT(YEAR FROM order_timestamp) AS order_year,
+  EXTRACT(MONTH FROM order_timestamp) AS order_month,
+  COUNT(*) AS total_orders,
+  SUM(price) AS total_revenue
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  order_year, order_month
+ORDER BY
+  order_year, order_month;
+```
 
+![image](https://github.com/user-attachments/assets/a3ba1bbb-4c58-450a-bcb7-aa7b6d4bf0cd)
+
+![image](https://github.com/user-attachments/assets/ae2ad23f-02fb-46bd-887a-47b9e0b97d0a)
+
+**Key Findings:**
+
+**Early Period:** In 2016, order volume is very low (startup or partial data).
+
+**2017:** Rapid growth trend—especially in the second half. November 2017 peaks (8,665 orders, nearly ₺1 million revenue).
+
+**2018:** Monthly orders and revenue stabilize at high levels (8,000+ orders, ~₺950,000–1,000,000 revenue).
+
+**2025 Data:** Only a few orders—likely test or erroneous records. Should be excluded from strategic analysis.
+
+**Seasonality & Trend Observations:**
+
+**Year-end Spike:** November/December (Black Friday, year-end campaigns) show major sales peaks.
+
+**Stabilization:** 2018 shows consistent high demand—indicating market maturity.
+
+**Growth Curve:** Initial period spent finding product-market fit, then rapid scaling.
+
+**Business Question 2:**
+How does order volume and revenue distribute by day of the week?
+
+```
+SELECT
+  FORMAT_DATE('%A', DATE(order_timestamp)) AS order_day,
+  COUNT(*) AS total_orders,
+  SUM(price) AS total_revenue
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  order_day
+ORDER BY
+  total_orders DESC;
+```
+
+![image](https://github.com/user-attachments/assets/6a3d3e29-5ba6-4e73-9bc1-0f68131277ec)
+
+**Key Findings:**
+
+**Busiest Days:** Monday, Tuesday, and Wednesday see the most orders and revenue.
+
+**Slowest Days:** Saturday and Sunday have noticeably lower volumes.
+
+**Explanation:** Weekdays (especially start of week) are preferred for replenishment, campaign deadlines, and routine purchases. Weekends see a drop, likely due to physical shopping, leisure, or delayed deliveries.
+
+**Business Recommendations:**
+
+Schedule campaigns and promotions for Mondays/Tuesdays and business hours for maximum impact.
+
+Stock and logistics planning should anticipate peak periods (week start, workday mornings/afternoons).
+
+Customer support can be reinforced during busiest time slots.
+
+**Business Question 3:**
+What are the peak order hours during the day?
+
+```
+SELECT
+  EXTRACT(HOUR FROM order_timestamp) AS order_hour,
+  COUNT(*) AS total_orders,
+  SUM(price) AS total_revenue
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  order_hour
+ORDER BY
+  order_hour;
+```
+
+![image](https://github.com/user-attachments/assets/4bb331a1-8b0e-4727-ab42-459489c533f7)
+
+![image](https://github.com/user-attachments/assets/fe0f1bf5-355b-4033-9c60-7f942b9f4bd1)
+
+**Hourly Trends:**
+
+**Night/Early Morning (00:00–06:00):** Low order activity.
+
+**Morning (07:00–12:00):** Orders rise quickly—peaking at 09:00–12:00 (5,000–7,400 orders/hour).
+
+**Afternoon/Evening (13:00–19:00):** Highest activity—especially 14:00–17:00 (7,000–7,600 orders/hour).
+
+**Late Evening (20:00–23:00):** Gradual decline, but still significant volume (4,600–6,500 orders/hour).
+
+**Business Recommendations:**
+
+**Campaigns:** Launch in the morning or late afternoon for higher engagement.
+
+**Digital Marketing:** Schedule emails/SMS between 09:00–11:00 or 15:00–17:00.
+
+**Operations:** Prepare for spikes at workday transitions; ensure inventory and fulfillment teams are ready.
+
+Time-based segmentation of e-commerce sales allows for optimal campaign timing, improved logistics, and better customer experience—directly impacting revenue and customer satisfaction.
 
 
 
