@@ -1670,6 +1670,21 @@ ORDER BY rfm_segment, monetary DESC;
 ```
 ![image](https://github.com/user-attachments/assets/98741ac1-a038-4a12-8a4c-dd66b6d609e4)
 
+### RFM Segmentation — Executive Summary & Key Insights
+
+Using the RFM segmentation model, I grouped customers based on their **Recency** (how recently they purchased), **Frequency** (how often they purchase), and **Monetary** (how much they spend). This allows us to identify distinct behavioral segments, such as *Champions*, *Loyal Customers*, *At Risk*, and *Lost*.
+
+**Key Insights:**
+- **Champions and Loyal Customers** (high RFM scores) make up a small but extremely valuable portion of the customer base, contributing disproportionately to total revenue.
+- **Recent Customers** represent new or reactivated buyers with recent activity but lower frequency/monetary value—an opportunity for onboarding and upsell campaigns.
+- **At Risk** and **Lost** segments signal churn risk: these customers have not purchased recently and may require targeted win-back or retention offers.
+- **Promising** and **Potential Loyalists** are emerging segments that can be nurtured with loyalty programs and targeted engagement.
+
+**Business Impact:**
+- RFM segmentation enables **personalized marketing, loyalty strategy, and churn prevention**. By focusing efforts on the highest-value and highest-risk segments, businesses can maximize ROI and drive sustainable revenue growth.
+- The results demonstrate the classic Pareto principle: a small share of customers (top RFM segments) generate the majority of revenue.
+
+This actionable segmentation lays the foundation for smarter customer targeting, effective retention campaigns, and data-driven business decisions.
 
 ## 🔗 Project Owner
 **Mert Ovet**  
