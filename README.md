@@ -1178,6 +1178,497 @@ LIMIT 10;
 ```
 ![image](https://github.com/user-attachments/assets/cd87469d-e6fa-4117-b93e-06a50e4863c0)
 
+**Key Insights:**
+
+Some customers spend thousands in a single order; others are repeat buyers.
+
+Lifecycle pattern: Many customers are one-time, high-ticket buyers—typical for special campaigns or business buyers.
+
+Customers with spaced-out first/last orders and high frequency = true loyalists.
+
+**Business Use Cases:**
+
+**Reactivation:** Target those with a long time since last order (“We miss you!” campaigns).
+
+**Lifecycle Marketing:** Personalized journeys based on purchase cadence.
+
+**Business Question 4:**
+Which customer-seller pairs have the strongest commercial ties?
+
+![image](https://github.com/user-attachments/assets/45167e6e-e1fc-4e73-965d-309c85e3333f)
+
+```sql
+SELECT
+  customer_id,
+  seller_id,
+  COUNT(order_id) AS total_orders,
+  SUM(price) AS total_spent
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  customer_id, seller_id
+ORDER BY
+  total_spent DESC
+LIMIT 10;
+```
+
+**Key Insights:**
+
+Some customers make all their purchases from a single seller, indicating strong brand or business relationships (B2B, bulk buyers, VIPs).
+
+Others interact with multiple sellers—opportunity for cross-sell/upsell strategies.
+
+**Actionable Takeaways:**
+
+Build VIP/loyalty lists per seller.
+
+Personalized CRM and offer management for customers with strong seller ties.
+
+**Business Question 5:**
+Who are the “loyal customers”? (At least 2 orders & above average total spend)
+
+**Step 1: Calculate Average Total Customer Spend**
+
+```sql
+SELECT AVG(total_spent) AS avg_spent
+FROM (
+  SELECT customer_id, SUM(price) AS total_spent
+  FROM `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY customer_id
+)
+```
+![image](https://github.com/user-attachments/assets/c6a75106-a194-4cb0-bab9-4d73b59d4802)
+
+
+**Step 2: Segment Loyal Customers**
+
+```sql
+WITH customer_summary AS (
+  SELECT
+    customer_id,
+    COUNT(*) AS total_orders,
+    SUM(price) AS total_spent
+  FROM
+    `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY customer_id
+),
+avg_stats AS (
+  SELECT AVG(total_spent) AS avg_spent FROM customer_summary
+)
+SELECT
+  COUNT(*) AS loyal_customer_count,
+  SUM(total_spent) AS loyal_customer_revenue
+FROM
+  customer_summary, avg_stats
+WHERE
+  total_orders >= 2
+  AND total_spent > avg_stats.avg_spent
+```
+
+![image](https://github.com/user-attachments/assets/43b90118-8ac9-4e09-bb8e-317350624a78)
+
+
+**Result:**
+
+Only 4.9% of customers (4,862 of 98,667) are “loyal,” yet they generate ~12% of total revenue ($1,616,704 out of $13,592,407).
+
+The loyal segment has much higher than average order value.
+
+**Business Impact:**
+
+**Small but mighty:** A small group of repeat, high-spend customers account for a significant share of revenue.
+
+**Growth lever:** Loyalty programs, personalized offers, and retention campaigns targeting this segment can drive outsized revenue gains.
+
+**Opportunity:** Boosting loyal customer count even modestly = large impact on topline.
+
+**Step 3: Total Customer Base & Revenue**
+
+To put our loyal customer segment into perspective, here are the total figures for the entire customer base:
+
+```sql
+SELECT
+  COUNT(DISTINCT customer_id) AS total_customers,
+  SUM(price) AS total_revenue
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+```
+
+![image](https://github.com/user-attachments/assets/dcac120b-3b87-4a24-a3d6-83fc7272d373)
+
+**Result:**
+
+**Total customers:** 98,667
+
+**Total revenue:** $13,592,407
+
+**Interpretation:**
+
+Out of nearly 99,000 customers, only ~4.9% (4,862) are classified as “loyal”—yet this segment contributes over $1.6M (about 12%) to total revenue.
+
+The data clearly shows: loyal, repeat customers are disproportionately valuable.
+
+Any incremental gain in this segment would have a significant impact on overall business results.
+
+## 8. Campaign Usage Segmentation & Advanced Customer Analytics
+
+### 8.1. **Campaign Flag Normalization & DDL Enhancement**
+
+#### Why Create a Permanent `campaign_flag` Field?
+
+In large-scale e-commerce analytics, accurate segmentation by **campaign usage** is crucial for understanding customer behavior, measuring campaign ROI, and building loyalty strategies. However, campaign identifiers (like coupon codes) can be stored inconsistently in raw data (e.g., `"no_campaign"`, `"NO_CAMPAIGN"`, `NULL`, etc.), making robust analysis difficult.
+
+**To enable reliable, scalable analysis:**
+- I used SQL DDL (Data Definition Language) to add a new column, `campaign_flag`, directly to the master flat table (`orders_flat`).
+- I then **standardized all campaign code variations** (e.g., `"no_campaign"`, `"NO_CAMPAIGN"`, etc.) to a single, lowercased value (`"no_campaign"`).
+- This ensures that all further analytics—across segments, time, or campaigns—are clean, consistent, and repeatable.
+
+#### Implementation Steps
+
+1. **Add a Permanent Campaign Flag Column:**
+    ```sql
+    ALTER TABLE `olist-bigquery.analytics_case.orders_flat`
+    ADD COLUMN campaign_flag STRING;
+    ```
+    ![image](https://github.com/user-attachments/assets/a02afa32-3d2f-4826-b167-3e6d6ea91113)
+
+
+2. **Standardize Campaign Code Values:**
+    All variations of "no_campaign" are updated to a single value.
+    ```sql
+    UPDATE `olist-bigquery.analytics_case.orders_flat`
+    SET order_campaign_coupon = 'no_campaign'
+    WHERE LOWER(order_campaign_coupon) = 'no_campaign';
+    ```
+    
+
+3. **Populate the Campaign Flag Column:**
+    Customers with `"no_campaign"` coupon are labeled as "Not Using Campaigns", others as "Campaign Used":
+    ```sql
+    UPDATE `olist-bigquery.analytics_case.orders_flat`
+    SET campaign_flag =
+      CASE
+        WHEN LOWER(order_campaign_coupon) = 'no_campaign' THEN 'Not Using Campaigns'
+        ELSE 'Campaign Used'
+      END
+    WHERE campaign_flag IS NULL;
+    ```
+![image](https://github.com/user-attachments/assets/9fde89d5-a8bc-46b5-af92-65b7f8e0986e)
+
+> **Why This Matters:**  
+> Without this normalization step, all downstream analyses (segmenting customers, measuring campaign impact, CLV by campaign, etc.) would be error-prone and potentially misleading. By handling this with DDL and UPDATEs, I ensured that the data model is **analytics-ready, repeatable, and robust**—key for professional BI/analytics environments.
+
+---
+
+### 8.2. **Campaign User vs. Non-User Analysis**
+
+#### Business Question  
+*Do customers who use campaigns differ in their purchase frequency and spend compared to those who don’t?*
+
+To answer this, I segmented all customers into two groups:
+- **"Using Campaigns"**: Customers who used a campaign/coupon code at least once.
+- **"Not Using Campaigns"**: Customers who never used any campaign/coupon.
+
+For each group, I calculated:
+- Number of unique customers
+- Total orders
+- Total revenue
+- Average orders per customer
+- Average revenue per customer
+
+```sql
+SELECT
+  customer_campaign_type,
+  COUNT(DISTINCT customer_id) AS customer_count,
+  SUM(total_orders) AS total_orders,
+  SUM(total_spent) AS total_revenue,
+  ROUND(SUM(total_orders)/COUNT(DISTINCT customer_id),2) AS avg_orders_per_customer,
+  ROUND(SUM(total_spent)/COUNT(DISTINCT customer_id),2) AS avg_revenue_per_customer
+FROM (
+  SELECT
+    customer_id,
+    CASE
+      WHEN SUM(CASE WHEN campaign_flag = 'Campaign Used' THEN 1 ELSE 0 END) > 0 THEN 'Using Campaigns'
+      ELSE 'Not Using Campaigns'
+    END AS customer_campaign_type,
+    COUNT(*) AS total_orders,
+    SUM(price) AS total_spent
+  FROM `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY customer_id
+)
+GROUP BY customer_campaign_type
+```
+
+![image](https://github.com/user-attachments/assets/457a4b3f-0b0d-4254-a514-661bf38ce507)
+
+**Key Insights & Commentary**
+Campaign usage is widespread: About two-thirds of all customers have used a campaign at least once.
+
+Average orders/revenue per customer is similar for both segments, suggesting campaigns drive customer base growth, not just higher individual spend.
+
+Total revenue is higher for the "campaign user" segment, but per-customer metrics are nearly identical—implying campaigns expand the customer base, rather than drastically increasing basket size.
+
+**Strategic note:** In this business, campaigns are effective at growing reach, but don’t necessarily change the depth of customer engagement. This insight is crucial for campaign ROI calculations and loyalty planning.
+
+#### 8.3. Customer Value (CLV) Segmentation
+**Purpose**
+To identify which customers create the most value, I built a CLV segmentation by dividing all customers into three equal-sized groups (terciles) by total spend.
+
+```sql
+WITH clv_base AS (
+  SELECT
+    customer_id,
+    SUM(price) AS total_spent
+  FROM
+    `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY
+    customer_id
+),
+clv_segmented AS (
+  SELECT
+    *,
+    NTILE(3) OVER (ORDER BY total_spent) AS clv_segment
+  FROM clv_base
+)
+SELECT
+  CASE
+    WHEN clv_segment = 1 THEN 'Low CLV'
+    WHEN clv_segment = 2 THEN 'Mid CLV'
+    WHEN clv_segment = 3 THEN 'High CLV'
+  END AS clv_segment_label,
+  COUNT(*) AS customer_count,
+  SUM(total_spent) AS total_clv,
+  ROUND(AVG(total_spent),2) AS avg_clv_per_customer
+FROM clv_segmented
+GROUP BY clv_segment_label
+ORDER BY clv_segment_label
+```
+![image](https://github.com/user-attachments/assets/d3dd6958-be0e-47d4-bbb6-e775cd2bdc7c)
+
+**Strategic Takeaways**
+**High CLV segment:** Represents 1/3 of customers, but accounts for ~68% of total revenue (classic Pareto effect).
+
+**Low CLV segment:** Same size as others, but delivers only ~8% of revenue.
+
+**Actions:**
+
+Focus retention and loyalty programs on high CLV customers.
+
+Use targeted cross-sell/up-sell strategies for mid-CLV group.
+
+Analyze low-CLV group for activation or cost-reduction opportunities.
+
+### 8.4. Churn & Reactivation Analysis
+**Business Objective**
+Identify customer lifecycle stages and potential for reactivation.
+
+**Segment definitions:**
+
+**Active:** Purchased in last 90 days
+
+**At Risk:** Last purchase 91-180 days ago
+
+**Churned:** >180 days since last purchase
+
+```sql
+WITH churn_segments AS (
+  SELECT
+    customer_id,
+    CASE
+      WHEN DATE_DIFF(CURRENT_DATE(), DATE(MAX(order_timestamp)), DAY) <= 90 THEN 'Active'
+      WHEN DATE_DIFF(CURRENT_DATE(), DATE(MAX(order_timestamp)), DAY) <= 180 THEN 'At Risk'
+      ELSE 'Churned'
+    END AS churn_segment
+  FROM
+    `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY
+    customer_id
+)
+
+SELECT
+  churn_segment,
+  COUNT(DISTINCT customer_id) AS customer_count
+FROM
+  churn_segments
+GROUP BY
+  churn_segment
+ORDER BY
+  customer_count DESC;
+```
+
+**Key Observations**
+Majority of customers in the data are "churned" due to data freshness; only a handful remain active (dataset caveat).
+
+In a real-world scenario, high churn rates should trigger urgent reactivation and retention efforts.
+
+Segmenting customers by recency enables targeted marketing, e.g. "We Miss You" campaigns.
+
+### 8.5. RFM Segmentation
+**Why RFM?**
+RFM (Recency, Frequency, Monetary) is a proven framework to quantify and segment customers for retention, upsell, and personalized campaigns.
+
+**Process:**
+
+Calculate recency (days since last order), frequency (total orders), and monetary value (total spend).
+
+Score each metric from 1 to 5, then assign segment labels (e.g. Champions, Loyal, At Risk, Lost, etc.)
+
+#### **Step 1: Calculate Recency, Frequency, Monetary for Each Customer**
+
+```sql
+WITH last_order AS (
+  SELECT
+    customer_id,
+    MAX(CAST(order_timestamp AS DATE)) AS last_order_date,    -- Most recent purchase date
+    COUNT(order_id) AS frequency,                             -- Total number of orders
+    SUM(price) AS monetary                                    -- Total spend
+  FROM
+    `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY customer_id
+)
+SELECT
+  customer_id,
+  last_order_date,
+  frequency,
+  monetary
+FROM last_order
+ORDER BY monetary DESC
+LIMIT 10;
+```
+**Output:**
+Each row shows for every customer: last purchase date, order count, and total spend.
+
+**Step 2: Score Each Customer (R, F, M) — Quantile Binning**
+Assign scores (1–5) for each R, F, M using NTILE().
+
+R Score: Lower value = more recent = higher score
+
+F & M Score: Higher value = higher score
+
+```sql
+WITH last_order AS (
+  SELECT
+    customer_id,
+    MAX(CAST(order_timestamp AS DATE)) AS last_order_date,
+    COUNT(order_id) AS frequency,
+    SUM(price) AS monetary
+  FROM
+    `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY customer_id
+),
+rfm_scores AS (
+  SELECT
+    customer_id,
+    DATE_DIFF(DATE('2025-07-09'), last_order_date, DAY) AS recency,
+    frequency,
+    monetary,
+    NTILE(5) OVER (ORDER BY DATE_DIFF(DATE('2025-07-09'), last_order_date, DAY) ASC) AS r_score,   -- Most recent = 5
+    NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,                                             -- Most frequent = 5
+    NTILE(5) OVER (ORDER BY monetary DESC) AS m_score                                               -- Highest spend = 5
+  FROM last_order
+)
+SELECT
+  customer_id,
+  recency,
+  frequency,
+  monetary,
+  r_score,
+  f_score,
+  m_score
+FROM rfm_scores
+ORDER BY m_score DESC, f_score DESC, r_score DESC
+LIMIT 10;
+```
+**Output:**
+For each customer, you now have scores from 1 (lowest) to 5 (highest) for recency, frequency, and monetary value.
+
+**Step 3: Label Customers by RFM Segment**
+Assign business-meaningful segments based on their RFM score combinations.
+**For example:**
+
+```sql
+SELECT
+  customer_id,
+  recency,
+  frequency,
+  monetary,
+  r_score,
+  f_score,
+  m_score,
+  CASE
+    WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Champions'
+    WHEN r_score >= 3 AND f_score >= 4 THEN 'Loyal Customers'
+    WHEN r_score >= 4 AND f_score BETWEEN 2 AND 3 THEN 'Potential Loyalists'
+    WHEN r_score = 5 AND f_score <= 2 THEN 'Recent Customers'
+    WHEN r_score BETWEEN 3 AND 4 AND f_score <= 2 THEN 'Promising'
+    WHEN r_score BETWEEN 2 AND 3 AND f_score BETWEEN 2 AND 3 THEN 'Customers Needing Attention'
+    WHEN r_score <= 2 AND f_score >= 4 THEN 'At Risk'
+    WHEN r_score = 1 AND f_score >= 4 THEN 'Can''t Lose Them'
+    WHEN r_score = 2 AND f_score BETWEEN 2 AND 3 THEN 'About To Sleep'
+    WHEN r_score = 1 AND f_score <= 2 THEN 'Lost'
+    ELSE 'Others'
+  END AS rfm_segment
+FROM rfm_scores
+ORDER BY rfm_segment, monetary DESC
+LIMIT 20;
+```
+
+**Champions:** Very recent, frequent, and high-spending
+
+**Loyal Customers:** Frequent, regular shoppers
+
+**At Risk / Lost:** Haven’t purchased in a long time, could churn
+
+**Step 4: Final All-in-One RFM Segmentation Query**
+Here is the fully integrated version for direct, actionable customer segmentation:
+
+```sql
+WITH last_order AS (
+  SELECT
+    customer_id,
+    MAX(CAST(order_timestamp AS DATE)) AS last_order_date,
+    COUNT(order_id) AS frequency,
+    SUM(price) AS monetary
+  FROM
+    `olist-bigquery.analytics_case.orders_flat`
+  GROUP BY customer_id
+),
+rfm_scores AS (
+  SELECT
+    customer_id,
+    DATE_DIFF(DATE('2025-07-09'), last_order_date, DAY) AS recency,
+    frequency,
+    monetary,
+    NTILE(5) OVER (ORDER BY DATE_DIFF(DATE('2025-07-09'), last_order_date, DAY) ASC) AS r_score,
+    NTILE(5) OVER (ORDER BY frequency DESC) AS f_score,
+    NTILE(5) OVER (ORDER BY monetary DESC) AS m_score
+  FROM last_order
+)
+SELECT
+  customer_id,
+  recency,
+  frequency,
+  monetary,
+  r_score,
+  f_score,
+  m_score,
+  CASE
+    WHEN r_score >= 4 AND f_score >= 4 AND m_score >= 4 THEN 'Champions'
+    WHEN r_score >= 3 AND f_score >= 4 THEN 'Loyal Customers'
+    WHEN r_score >= 4 AND f_score BETWEEN 2 AND 3 THEN 'Potential Loyalists'
+    WHEN r_score = 5 AND f_score <= 2 THEN 'Recent Customers'
+    WHEN r_score BETWEEN 3 AND 4 AND f_score <= 2 THEN 'Promising'
+    WHEN r_score BETWEEN 2 AND 3 AND f_score BETWEEN 2 AND 3 THEN 'Customers Needing Attention'
+    WHEN r_score <= 2 AND f_score >= 4 THEN 'At Risk'
+    WHEN r_score = 1 AND f_score >= 4 THEN 'Can''t Lose Them'
+    WHEN r_score = 2 AND f_score BETWEEN 2 AND 3 THEN 'About To Sleep'
+    WHEN r_score = 1 AND f_score <= 2 THEN 'Lost'
+    ELSE 'Others'
+  END AS rfm_segment
+FROM rfm_scores
+ORDER BY rfm_segment, monetary DESC;
+```
+![image](https://github.com/user-attachments/assets/98741ac1-a038-4a12-8a4c-dd66b6d609e4)
 
 
 ## 🔗 Project Owner
