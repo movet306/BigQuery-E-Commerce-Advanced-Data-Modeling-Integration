@@ -1,5 +1,4 @@
 # BigQuery-E-Commerce-Advanced-Data-Modeling-Integration
-# 🏆 BigQuery E-Commerce — Advanced Data Modeling & Integration
 
 > **Project Owner:** Mert Ovet  
 > [LinkedIn: linkedin.com/in/mertovet](https://linkedin.com/in/mertovet)
