@@ -973,7 +973,7 @@ ORDER BY
 **Business Question 2:**
 How does order volume and revenue distribute by day of the week?
 
-```
+```sql
 SELECT
   FORMAT_DATE('%A', DATE(order_timestamp)) AS order_day,
   COUNT(*) AS total_orders,
@@ -1007,7 +1007,7 @@ Customer support can be reinforced during busiest time slots.
 **Business Question 3:**
 What are the peak order hours during the day?
 
-```
+```sql
 SELECT
   EXTRACT(HOUR FROM order_timestamp) AS order_hour,
   COUNT(*) AS total_orders,
