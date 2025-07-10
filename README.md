@@ -657,11 +657,11 @@ LIMIT 10;
 
 **Key Findings:**
 
-**Most sold product:** aca2eb7d00ea1a7b8ebd4e683... (527 units, ₺37,609 total revenue)
+**Most sold product:** aca2eb7d00ea1a7b8ebd4e683... (527 units, $37,609 total revenue)
 
-**Top-grossing product:** 99a4788cb24856965c36a24e3... (488 units, ₺43,025 total revenue)
+**Top-grossing product:** 99a4788cb24856965c36a24e3... (488 units, $43,025 total revenue)
 
-The top 5 products range from 388 to 527 units sold, and ₺21,000 to ₺43,000 in revenue.
+The top 5 products range from 388 to 527 units sold, and $21,000 to $43,000 in revenue.
 
 **Business Impact:**
 
@@ -728,9 +728,9 @@ FROM
 
 **Total Orders:** 98,667
 
-**Total Revenue:** ₺13,592,407
+**Total Revenue:** $13,592,407
 
-**AOV:** ₺137.76
+**AOV:** $137.76
 
 ---
 
@@ -873,7 +873,7 @@ LIMIT 20;
 
 **Key Insights:**
 
-São Paulo (SP) leads both in order volume (17,808 orders) and revenue (₺1,914,924), followed by Rio de Janeiro (RJ) and Belo Horizonte (MG).
+São Paulo (SP) leads both in order volume (17,808 orders) and revenue ($1,914,924), followed by Rio de Janeiro (RJ) and Belo Horizonte (MG).
 
 The top 5 cities account for a dominant share of overall e-commerce activity.
 
@@ -956,9 +956,9 @@ ORDER BY
 
 **Early Period:** In 2016, order volume is very low (startup or partial data).
 
-**2017:** Rapid growth trend—especially in the second half. November 2017 peaks (8,665 orders, nearly ₺1 million revenue).
+**2017:** Rapid growth trend—especially in the second half. November 2017 peaks (8,665 orders, nearly $1 million revenue).
 
-**2018:** Monthly orders and revenue stabilize at high levels (8,000+ orders, ~₺950,000–1,000,000 revenue).
+**2018:** Monthly orders and revenue stabilize at high levels (8,000+ orders, ~$950,000–1,000,000 revenue).
 
 **2025 Data:** Only a few orders—likely test or erroneous records. Should be excluded from strategic analysis.
 
@@ -1044,6 +1044,139 @@ ORDER BY
 
 Time-based segmentation of e-commerce sales allows for optimal campaign timing, improved logistics, and better customer experience—directly impacting revenue and customer satisfaction.
 
+---
+
+### 7.7. Advanced Segmentation & Window Function Analysis
+
+#### Business Question 1:  
+Which customers have placed the most orders and spent the most?
+
+```sql
+SELECT
+  customer_id,
+  COUNT(order_id) AS total_orders,
+  SUM(price) AS total_spent,
+  RANK() OVER (ORDER BY SUM(price) DESC) AS revenue_rank
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  customer_id
+ORDER BY
+  total_spent DESC
+LIMIT 10;
+---
+
+### 7.7. Advanced Segmentation & Window Function Analysis
+
+#### Business Question 1:  
+Which customers have placed the most orders and spent the most?
+
+```sql
+SELECT
+  customer_id,
+  COUNT(order_id) AS total_orders,
+  SUM(price) AS total_spent,
+  RANK() OVER (ORDER BY SUM(price) DESC) AS revenue_rank
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  customer_id
+ORDER BY
+  total_spent DESC
+LIMIT 10;
+---
+
+### 7.7. Advanced Segmentation & Window Function Analysis
+
+#### Business Question 1:  
+Which customers have placed the most orders and spent the most?
+
+```sql
+SELECT
+  customer_id,
+  COUNT(order_id) AS total_orders,
+  SUM(price) AS total_spent,
+  RANK() OVER (ORDER BY SUM(price) DESC) AS revenue_rank
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  customer_id
+ORDER BY
+  total_spent DESC
+LIMIT 10;
+```
+![image](https://github.com/user-attachments/assets/12d08ea8-2599-411e-bb4c-c0f0da53af35)
+
+**Key Insights:**
+
+**Top customer (1617b1357756262bfa56ab541...):** 8 orders, $13,440 total spent.
+
+Some in top 10 made only one order but spent >$4,500 (single high-value transaction).
+
+Others (e.g., 6th place): Frequent orders + high total spend—loyal, high-value repeat customer.
+
+**Business Segmentation:**
+
+**Multi-order, high spend:** Ideal for retention programs (loyalty, VIP campaigns).
+
+**Single big-ticket buyer:** Likely premium/corporate or campaign-driven—target for reactivation.
+
+Segmenting by behavior enables more effective marketing and customer success strategies.
+
+**Business Question 2:**
+Which sellers generate the most revenue and what is the sales distribution?
+
+```sql
+SELECT
+  seller_id,
+  COUNT(order_id) AS total_orders,
+  SUM(price) AS total_revenue,
+  RANK() OVER (ORDER BY SUM(price) DESC) AS seller_rank
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  seller_id
+ORDER BY
+  total_revenue DESC
+LIMIT 10;
+```
+![image](https://github.com/user-attachments/assets/3b203e12-20b3-4b34-89f7-86f6cbd61a1b)
+
+**Key Insights:**
+
+**Top seller (4869f7a5dfa277a7dca6462dcf...):** 1,156 orders, $229,472 revenue.
+
+**Pareto effect:** Top 3 sellers generate almost $650,000—market is heavily concentrated.
+
+**Low-volume, high-revenue sellers:** Niche/expensive items, B2B or special deals.
+
+**High-volume, high-revenue sellers:** Core market drivers.
+
+**Strategic Actions:**
+
+Tailor partnerships and exclusive campaigns for “power sellers.”
+
+Identify “niche” sellers for premium product strategies.
+
+**Business Question 3:**
+What is each customer’s order lifecycle (first/last order, total spent)?
+
+```sql
+SELECT
+  customer_id,
+  MIN(order_timestamp) AS first_order,
+  MAX(order_timestamp) AS last_order,
+  COUNT(order_id) AS total_orders,
+  SUM(price) AS total_spent
+FROM
+  `olist-bigquery.analytics_case.orders_flat`
+GROUP BY
+  customer_id
+ORDER BY
+  total_spent DESC
+LIMIT 10;
+```
+![image](https://github.com/user-attachments/assets/cd87469d-e6fa-4117-b93e-06a50e4863c0)
 
 
 
