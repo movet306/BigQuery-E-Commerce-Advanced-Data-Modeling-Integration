@@ -22,7 +22,7 @@ The data used in this case study comes from the [Brazilian E-Commerce Public Dat
 
 All data analysis, feature engineering, KPIs, customer/seller segmentation, and business strategies presented in this project were **entirely designed, implemented, and documented by myself after thoroughly exploring the raw data**.  
 
-No third-party analyses, code, or strategic frameworks were used. Every business question, analytical approach, and SQL/Python implementation reflects my own planning, reasoning, and hands-on work based on my understanding of the dataset and business context.
+No third-party analyses, code, or strategic frameworks were used. Every business question, analytical approach, and SQL/Python implementation carried out by myself.
 
 ---
 
